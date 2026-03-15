@@ -24,3 +24,5 @@ streamlit
 
 huggingface-hub
 tqdm
+langchain_groq
+langchain_core

@@ -289,7 +289,9 @@ async function startGeneration() {
     }
 
     const data = await response.json();
-    const summary = data.summary;
+  
+    // ✅ AFTER
+     const summary = data.llm_summary || data.model_summary;
 
     if (!summary) throw new Error('Empty response from server.');
     displaySummary(summary);

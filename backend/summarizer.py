@@ -5,23 +5,22 @@ from docx import Document
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor
-
-
-
 from google import genai
 import os
 
-client = genai.Client(api_key="AIzaSyDuzl7Q7BIbSG5knVepFTrODPP5E3MxxSc")
+# ── ENV ───────────────────────────────────────
+load_dotenv()   # must be called before os.getenv
 
+client = genai.Client(api_key="AIzaSyBp9cAolhGC7wdKqLiWR1zZNOoF7mOBbwQ")
 
 
 # ── MODEL SETUP ───────────────────────────────
-MODEL_PATH = "../model"
+MODEL_PATH = "model"   # local fine-tuned T5 checkpoint
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-
+device    = "cuda" if torch.cuda.is_available() else "cpu"
 tokenizer = T5Tokenizer.from_pretrained(MODEL_PATH)
 model     = T5ForConditionalGeneration.from_pretrained(MODEL_PATH).to(device)
+model.eval()
 
 
 # ── EXTRACT PDF ───────────────────────────────
@@ -30,16 +29,14 @@ def extract_pdf(file):
     Accepts a Flask FileStorage stream or any file-like object.
     Reads all pages and returns concatenated text.
     """
-    text = ""
-
-    # Wrap in BytesIO so pdfplumber always gets a seekable stream
-    raw = file.read() if hasattr(file, "read") else file
+    raw    = file.read() if hasattr(file, "read") else file
     stream = io.BytesIO(raw)
 
+    text = ""
     with pdfplumber.open(stream) as pdf:
         for page in pdf.pages:
             page_text = page.extract_text()
-            if page_text:                        # skip blank pages
+            if page_text:
                 text += page_text + "\n"
 
     return text.strip()
@@ -70,102 +67,102 @@ def extract_txt(file):
     return raw.decode("utf-8").strip()
 
 
+# ── T5 CHUNK INFERENCE ────────────────────────
 def _summarize_chunk(text, params):
     """
     Runs T5 inference on a single chunk of text.
+    Called directly or via ThreadPoolExecutor.
     """
     input_ids = tokenizer.encode(
         "summarize: " + text,
         return_tensors="pt",
         max_length=512,
-        truncation=True
+        truncation=True,
     ).to(device)
 
-    outputs = model.generate(
-        input_ids,
-        max_new_tokens=params["max_new_tokens"],
-        min_new_tokens=params["min_new_tokens"],
-        num_beams=4,
-        length_penalty=2.0,
-        no_repeat_ngram_size=3,
-        early_stopping=True
-    )
+    with torch.no_grad():
+        outputs = model.generate(
+            input_ids,
+            max_new_tokens=params["max_new_tokens"],
+            min_new_tokens=params["min_new_tokens"],
+            num_beams=4,
+            length_penalty=2.0,
+            no_repeat_ngram_size=3,
+            early_stopping=True,
+        )
+
 
     return tokenizer.decode(outputs[0], skip_special_tokens=True)
 
 
+# ── GEMINI REFINEMENT ─────────────────────────
+def llm(summary, word_param):
 
-def llm(summary,word_param):
-     min_words = word_param["min_word"]
-     max_words = word_param["max_word"]
+    min_words = word_param["min_word"]
+    max_words = word_param["max_word"]
 
-     prompt = f"""
-You are an expert document analyst.
+    prompt = f"""
+Improve the summary below.
 
-Improve the following summary and extract useful insights.
+Rules:
+- {min_words}-{max_words} words
+- No paragraphs
+- Structured format
 
-STRICT RULES:
-- Total response MUST be between {min_words} and {max_words} words. Count carefully.
-- Do NOT exceed {max_words} words under any circumstance.
-- Do NOT write in paragraphs. Use ONLY the exact format below.
-
-Return output in EXACTLY this format (no extra text, no paragraphs):
-
-Improved Summary:
-<your refined summary here in 2-4 sentences>
-
-Key Insights:
-- <insight 1>
-- <insight 2>
-- <insight 3>
-
-Important Points:
-- <point 1>
-- <point 2>
-
-Summary to improve:
+Summary:
 {summary}
 """
 
-     response = client.models.generate_content(
-       model="gemini-2.5-flash",
-        contents=prompt
-    )
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+        )
 
-     return response.text
+        if response and response.text:
+            return response.text
+        else:
+            return summary
+
+    except Exception as e:
+        print("Gemini Error:", e)
+        return summary
 
 
+# ── MAIN SUMMARY PIPELINE ─────────────────────
 def generate_summary(text, length="medium"):
     if not text or not text.strip():
-        return {"model_summary": "", "llm_summary": "No text provided for summarization."}
+        return {
+            "model_summary": "",
+            "llm_summary": "No text provided for summarization.",
+        }
 
     length_map = {
-        "short":    {"max_new_tokens": 100,  "min_new_tokens": 60},
+        "short":    {"max_new_tokens": 100, "min_new_tokens": 60},
         "medium":   {"max_new_tokens": 250, "min_new_tokens": 130},
         "detailed": {"max_new_tokens": 700, "min_new_tokens": 250},
     }
-    word_limits = {                              # ← renamed from `len`
+    word_limits = {
         "short":    {"max_word": 60,  "min_word": 50},
-        "medium":   {"max_word": 150,  "min_word": 130},
+        "medium":   {"max_word": 150, "min_word": 130},
         "detailed": {"max_word": 300, "min_word": 280},
     }
 
-    params      = length_map.get(length, length_map["medium"])
-    word_param  = word_limits.get(length, word_limits["medium"])  # ← use renamed dict
-    words      = text.split()
-    if len(words) > 400: 
-        chunks = [" ".join(words[i:i + 400]) for i in range(0, len(words), 400)]
+    params     = length_map.get(length, length_map["medium"])
+    word_param = word_limits.get(length, word_limits["medium"])
 
-        # ✅ Parallel — all chunks run at the same time
-        with ThreadPoolExecutor() as executor:
-            partials = list(executor.map(lambda c: _summarize_chunk(c, params), chunks))
+    words = text.split()
+
+
     t5_summary = _summarize_chunk(text, params)
 
- 
+
+        # Short document — single-pass summarization
+     
+    # Refine and enrich with Gemini
     final_summary = llm(t5_summary, word_param)
 
     return {
-        "model_summary": t5_summary,    # T5 output
-        "llm_summary":   final_summary  # Gemini output
+        "model_summary": t5_summary,    # raw T5 output
+        "llm_summary":   final_summary, # Gemini-refined output
     }
-
