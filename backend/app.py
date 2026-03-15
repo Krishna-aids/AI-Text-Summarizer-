@@ -1,11 +1,18 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from summarizer import extract_pdf, extract_docx, extract_txt, generate_summary
+from flask import send_from_directory
+
 
 app = Flask(__name__)
 CORS(app)
 
 # ── EXTRACT ROUTE ─────────────────────────────
+@app.route("/")
+def home():
+    return send_from_directory("../frontend", "index.html")
+
+
 @app.route("/extract", methods=["POST"])
 def extract():
     try:
@@ -62,7 +69,7 @@ def summarize():
 
         return jsonify({
             "model_summary": model_summary,
-            "final_output": llm_summary
+            "llm_summary": llm_summary
         })
 
     except Exception as e:
@@ -71,4 +78,4 @@ def summarize():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=7860)

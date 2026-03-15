@@ -129,9 +129,9 @@ This project is open-source. See the repository for license details.
 
 ## 👤 Author
 
-#### **Tarun Dange** — [@HeadTarun](https://github.com/HeadTarun)
-#### **Krishna Kumrawat** - [@Krishna-aids](https://github.com/Krishna-aids)
-#### **Abhinav Singh Kushwah** - [@Abhinavsingh000001](https://github.com/Abhinavsingh000001/Abhinavsingh000001)
+**Tarun Dange** — [@HeadTarun](https://github.com/HeadTarun)
+**Krishna Kumrawat** - [@Krishna-aids](https://github.com/Krishna-aids)
+**Abhinav Singh Kushwah** - [@Abhinavsingh000001](https://github.com/Abhinavsingh000001/Abhinavsingh000001)
 ---
 
 > ⭐ If you find this project useful, please consider giving it a star on GitHub!

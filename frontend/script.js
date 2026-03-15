@@ -290,7 +290,7 @@ async function startGeneration() {
 
     const data = await response.json();
   
-    // ✅ AFTER
+    
      const summary = data.llm_summary || data.model_summary;
 
     if (!summary) throw new Error('Empty response from server.');
@@ -329,21 +329,21 @@ function formatSummaryHTML(text) {
       return;
     }
 
-    // Section headers like "Improved Summary:", "Key Insights:", "Important Points:"
-    if (/^[A-Z][^:]+:$/.test(trimmed)) {
+    // ✅ Fix: matches "Improved Summary:", "Key Insights:", "Important Points:"
+    // Old regex /^[A-Z][^:]+:$/ failed if line had trailing space or lowercase words
+    if (/^[A-Za-z][^:\n]+:\s*$/.test(trimmed)) {
       if (inList) { html += '</ul>'; inList = false; }
-      html += `<p class="summary-section-title">${trimmed}</p>`;
+      html += `<p class="summary-section-title">${trimmed.replace(/:$/, '')}</p>`;
       return;
     }
 
-    // Bullet points starting with "- "
-    if (trimmed.startsWith('- ')) {
+    // Bullet: "- text" or "* text"
+    if (/^[-*]\s+/.test(trimmed)) {
       if (!inList) { html += '<ul class="summary-list">'; inList = true; }
-      html += `<li>${trimmed.slice(2)}</li>`;
+      html += `<li>${trimmed.replace(/^[-*]\s+/, '')}</li>`;
       return;
     }
 
-    // Regular paragraph text
     if (inList) { html += '</ul>'; inList = false; }
     html += `<p class="summary-para">${trimmed}</p>`;
   });

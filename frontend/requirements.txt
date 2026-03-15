@@ -1,0 +1,19 @@
+# ── Web Framework ─────────────────────────────
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# ── Document Extraction ───────────────────────
+pdfplumber>=0.11.0
+python-docx>=1.1.0
+
+# ── ML / Summarization Model ─────────────────
+torch>=2.2.0
+transformers>=4.40.0
+sentencepiece>=0.2.0          # required by T5Tokenizer
+
+# ── LLM Client (Groq) ────────────────────────
+langchain-groq>=0.1.6
+langchain-core>=0.2.0
+
+# ── Environment / Config ──────────────────────
+python-dotenv>=1.0.0
