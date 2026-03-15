@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SummarizeAI — Automatic Text Summarization</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <!-- Mammoth.js for DOCX rendering -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+</head>
+<body>
+
+  <!-- Ambient orbs -->
+  <div class="orb orb--a"></div>
+  <div class="orb orb--b"></div>
+  <div class="orb orb--c"></div>
+
+  <!-- ══════════════════════════════════════
+       HEADER
+  ══════════════════════════════════════ -->
+  <header class="header">
+    <div class="header__inner">
+      <div class="logo">
+        <svg viewBox="0 0 28 28" fill="none" class="logo__mark">
+          <rect width="28" height="28" rx="7" fill="#6366F1" fill-opacity="0.18"/>
+          <path d="M7 9h14M7 14h10M7 19h7" stroke="#6366F1" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="21" cy="19" r="3" fill="#22C55E"/>
+        </svg>
+        <span class="logo__text">Summarize<em>AI</em></span>
+      </div>
+      <div class="status-badge">
+        <span class="status-badge__dot"></span>
+        Model Ready
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════
+       MINI HERO
+  ══════════════════════════════════════ -->
+  <section class="mini-hero">
+    <div class="mini-hero__inner">
+      <h1 class="mini-hero__title">Turn any document into a <span>clear summary</span></h1>
+      <p class="mini-hero__sub">Upload a PDF, DOCX, or TXT — the AI extracts the key ideas instantly.</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════
+       MAIN CONTENT
+  ══════════════════════════════════════ -->
+  <main class="main">
+
+    <!-- ── WORKSPACE GRID (Upload | Preview) ── -->
+    <div class="workspace-grid">
+
+      <!-- LEFT: Upload -->
+      <div class="workspace-left">
+        <div class="glass-card upload-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <svg viewBox="0 0 20 20" fill="none"><path d="M10 13V4M6 7l4-4 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 14v2a1 1 0 001 1h12a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </div>
+            <div>
+              <h2 class="card-title">Upload Document</h2>
+              <p class="card-sub">PDF, DOCX, or TXT file</p>
+            </div>
+          </div>
+
+          <!-- Drop zone -->
+          <label class="drop-zone" id="upload-zone" for="file-input">
+            <div class="drop-zone__rings">
+              <span class="ring r1"></span>
+              <span class="ring r2"></span>
+              <span class="ring r3"></span>
+            </div>
+            <!-- icon hidden via JS class .drop-zone--loaded after upload -->
+            <svg class="drop-zone__icon" id="drop-zone-icon" width="36" height="36" viewBox="0 0 48 48" fill="none">
+              <path d="M24 32V16M16 23l8-8 8 8" stroke="#6366F1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <rect x="6" y="37" width="36" height="2.5" rx="1.25" fill="#6366F1" fill-opacity="0.2"/>
+            </svg>
+            <span class="drop-zone__text" id="upload-text">Drop your file here</span>
+            <span class="drop-zone__hint" id="upload-hint">PDF · DOCX · TXT</span>
+            <input type="file" id="file-input" accept=".pdf,.docx,.txt" hidden/>
+          </label>
+
+          <!-- File chip (shown after upload, replaces drop zone visual prominence) -->
+          <div class="file-chip-wrap" id="file-info" style="display:none;">
+            <div class="file-chip">
+              <svg class="file-chip__icon" width="13" height="13" viewBox="0 0 18 18" fill="none"><path d="M10 2H4a1.5 1.5 0 00-1.5 1.5v11A1.5 1.5 0 004 16h10a1.5 1.5 0 001.5-1.5V7L10 2z" stroke="currentColor" stroke-width="1.3"/><path d="M10 2v5h5" stroke="currentColor" stroke-width="1.3"/></svg>
+              <span id="file-name">document.pdf</span>
+              <button class="file-chip__remove" id="file-remove" title="Remove">
+                <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Live stats -->
+          <div class="live-stats" id="live-stats" style="display:none;">
+            <div class="live-stats__row">
+              <span class="live-stats__label">
+                <svg viewBox="0 0 14 14" fill="none" width="12" height="12"><path d="M1 3h12M1 7h8M1 11h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                Document
+              </span>
+              <span class="live-stats__value" id="stat-doc-words">—</span>
+            </div>
+            <div class="live-stats__divider"></div>
+            <div class="live-stats__row">
+              <span class="live-stats__label">
+                <svg viewBox="0 0 14 14" fill="none" width="12" height="12"><path d="M2 4h10M2 7h7M2 10h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="11" cy="10" r="2" fill="#22C55E"/></svg>
+                Estimated summary
+              </span>
+              <span class="live-stats__value accent" id="stat-est-words">—</span>
+            </div>
+          </div>
+
+        </div><!-- /upload-card -->
+      </div><!-- /workspace-left -->
+
+      <!-- RIGHT: Preview -->
+      <div class="workspace-right">
+        <div class="glass-card preview-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <svg viewBox="0 0 20 20" fill="none"><path d="M4 4h12v12H4V4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M7 8h6M7 11h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </div>
+            <div>
+              <h2 class="card-title">Document Preview</h2>
+              <p class="card-sub">Extracted content from your file</p>
+            </div>
+            <span class="word-count" id="word-count" style="display:none;"></span>
+          </div>
+
+          <!-- Preview area -->
+          <div class="preview-area">
+            <!-- Empty state -->
+            <div class="empty-state" id="preview-empty">
+              <svg viewBox="0 0 44 44" fill="none" width="38" height="38">
+                <rect x="8" y="4" width="28" height="36" rx="3" stroke="currentColor" stroke-width="1.4" stroke-dasharray="3 3" opacity="0.4"/>
+                <path d="M14 14h16M14 19h16M14 24h10M14 29h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity="0.4"/>
+              </svg>
+              <span>Upload a document to preview its content</span>
+            </div>
+
+            <!-- TXT preview -->
+            <div class="preview-text" id="preview-text" style="display:none;"></div>
+
+            <!-- PDF preview -->
+            <iframe class="preview-pdf" id="preview-pdf" style="display:none;" title="PDF Preview"></iframe>
+
+            <!-- DOCX preview -->
+            <div class="preview-docx" id="preview-docx" style="display:none;"></div>
+          </div>
+        </div>
+      </div><!-- /workspace-right -->
+
+    </div><!-- /workspace-grid -->
+
+    <!-- ── SETTINGS CONTROL BAR ── -->
+    <div class="settings-bar glass-card">
+      <div class="settings-bar__label">
+        <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        Summary Length
+      </div>
+      <div class="settings-bar__options">
+
+        <label class="length-pill">
+          <input type="radio" name="length" value="short" checked/>
+          <span class="length-pill__face">
+            <span class="length-pill__icon">⚡</span>
+            <span class="length-pill__name">Short</span>
+            <span class="length-pill__note">~60 words</span>
+          </span>
+        </label>
+
+        <label class="length-pill">
+          <input type="radio" name="length" value="medium"/>
+          <span class="length-pill__face">
+            <span class="length-pill__icon">📋</span>
+            <span class="length-pill__name">Medium</span>
+            <span class="length-pill__note">~130 words</span>
+          </span>
+        </label>
+
+        <label class="length-pill">
+          <input type="radio" name="length" value="detailed"/>
+          <span class="length-pill__face">
+            <span class="length-pill__icon">📖</span>
+            <span class="length-pill__name">Detailed</span>
+            <span class="length-pill__note">~280 words</span>
+          </span>
+        </label>
+
+      </div>
+    </div>
+
+    <!-- ── GENERATE BUTTON ROW ── -->
+    <div class="generate-row">
+      <button class="btn-generate" id="btn-generate" disabled>
+        <span class="btn-text">Generate Summary</span>
+        <span class="btn-loader" id="btn-loader" style="display:none;">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        </span>
+        <svg class="btn-icon" viewBox="0 0 20 20" fill="none">
+          <path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      <!-- Large document warning -->
+      <div class="large-doc-notice" id="large-doc-notice" style="display:none;">
+        <svg viewBox="0 0 16 16" fill="none" width="13" height="13">
+          <circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.3"/>
+          <path d="M8 5v3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          <circle cx="8" cy="11" r="0.75" fill="currentColor"/>
+        </svg>
+        Large document detected. Estimated processing time: 30–90 seconds.
+      </div>
+    </div>
+
+    <!-- ── SUMMARY OUTPUT (full width) ── -->
+    <div class="glass-card output-card" id="output-card">
+      <div class="card-header">
+        <div class="card-icon card-icon--accent">
+          <svg viewBox="0 0 20 20" fill="none"><path d="M4 5h12M4 9h10M4 13h7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="16" cy="14" r="3" fill="#22C55E" fill-opacity="0.2" stroke="#22C55E" stroke-width="1.3"/><path d="M15 14h2M16 13v2" stroke="#22C55E" stroke-width="1.3" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <h2 class="card-title">Summary Output</h2>
+          <p class="card-sub">AI-generated summary</p>
+        </div>
+        <div class="output-badge" id="output-badge" style="display:none;"></div>
+      </div>
+
+      <!-- AI status messages (while generating) -->
+      <div class="ai-status" id="ai-status" style="display:none;">
+        <div class="ai-status__icon">
+          <span class="ai-status__spinner"></span>
+        </div>
+        <span class="ai-status__msg" id="ai-status-msg">Analyzing document structure…</span>
+      </div>
+
+      <!-- Skeleton blocks (while generating) -->
+      <div class="skeleton-wrap" id="skeleton-wrap" style="display:none;">
+        <div class="skeleton-line" style="width:95%"></div>
+        <div class="skeleton-line" style="width:88%"></div>
+        <div class="skeleton-line" style="width:92%"></div>
+        <div class="skeleton-line" style="width:75%"></div>
+        <div class="skeleton-line" style="width:85%"></div>
+        <div class="skeleton-line" style="width:60%"></div>
+      </div>
+
+      <!-- Empty state -->
+      <div class="empty-state" id="output-empty">
+        <svg viewBox="0 0 44 44" fill="none" width="38" height="38">
+          <path d="M8 12h28M8 19h22M8 26h16" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-dasharray="3 3" opacity="0.35"/>
+          <circle cx="33" cy="29" r="7" stroke="currentColor" stroke-width="1.4" opacity="0.35"/>
+          <path d="M31 29h4M33 27v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity="0.35"/>
+        </svg>
+        <span>Generate a summary to see the output here</span>
+      </div>
+
+      <!-- Summary text -->
+      <div class="output-text" id="output-text" style="display:none;"></div>
+
+      <!-- Intelligence panel -->
+      <div class="intel-panel" id="intel-panel" style="display:none;">
+        <div class="intel-stat">
+          <span class="intel-stat__val" id="intel-original">—</span>
+          <span class="intel-stat__key">Original words</span>
+        </div>
+        <div class="intel-divider"></div>
+        <div class="intel-stat">
+          <span class="intel-stat__val accent" id="intel-summary">—</span>
+          <span class="intel-stat__key">Summary words</span>
+        </div>
+        <div class="intel-divider"></div>
+        <div class="intel-stat">
+          <span class="intel-stat__val" id="intel-ratio">—</span>
+          <span class="intel-stat__key">Compression</span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="output-actions" id="output-actions" style="display:none;">
+        <button class="btn-download" id="btn-download" disabled>
+          <svg viewBox="0 0 18 18" fill="none" width="14" height="14"><path d="M9 3v9M5 9l4 4 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 15h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          Download
+        </button>
+        <button class="btn-copy" id="btn-copy">
+          <svg viewBox="0 0 18 18" fill="none" width="14" height="14"><rect x="6" y="6" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M12 6V4a2 2 0 00-2-2H4a2 2 0 00-2 2v6a2 2 0 002 2h2" stroke="currentColor" stroke-width="1.5"/></svg>
+          Copy
+        </button>
+      </div>
+
+    </div><!-- /output-card -->
+
+  </main>
+
+  <footer class="footer">
+    <p>Automatic Text Summarization System &nbsp;·&nbsp; T5 Transformer &nbsp;·&nbsp; Flask API</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
