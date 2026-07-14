@@ -1,7 +1,7 @@
 # 📝 Text Summarization AI
 
 An **Automatic Text Summarization System** powered by a fine-tuned **T5 Transformer** model that generates concise, accurate summaries from long documents.
-
+View Live : https://ai-text-summarizer-wm5u.onrender.com/
 ---
 
 ## 🚀 Features
@@ -130,8 +130,6 @@ This project is open-source. See the repository for license details.
 ## 👤 Author
 
 #### **Krishna Kumrawat** — [@Krishna-aids](https://github.com/Krishna-aids)
-#### **Abhinav Singh Kushwah** - [@Abhinavsingh000001](https://github.com/Abhinavsingh000001/Abhinavsingh000001)
-#### **Ashish Jayswal** - [@Ashishjayswal](http://github.com/Ashishjayswal)
 
 ---
 
