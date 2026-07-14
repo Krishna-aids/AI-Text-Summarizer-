@@ -4,13 +4,17 @@ from summarizer import extract_pdf, extract_docx, extract_txt, generate_summary
 from flask import send_from_directory
 
 
-app = Flask(__name__)
+import os
+
+FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
+
+app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path="")
 CORS(app)
 
-# ── EXTRACT ROUTE ─────────────────────────────
+# ── SERVE FRONTEND ─────────────────────────────
 @app.route("/")
 def home():
-    return send_from_directory("../frontend", "index.html")
+    return send_from_directory(FRONTEND_DIR, "index.html")
 
 
 @app.route("/extract", methods=["POST"])

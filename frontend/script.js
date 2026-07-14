@@ -135,7 +135,7 @@ async function extractFromBackend(file) {
   formData.append('file', file);
 
   try {
-    const response = await fetch('http://127.0.0.1:5000/extract', {
+    const response = await fetch('/extract', {
       method: 'POST',
       body: formData          // ← no Content-Type header; browser sets multipart boundary
     });
@@ -258,7 +258,7 @@ btnGenerate.addEventListener('click', () => {
 });
 
 // ── API CONFIG ────────────────────────────────
-const API_URL = 'http://127.0.0.1:5000/summarize';
+const API_URL = '/summarize';
 
 async function startGeneration() {
   // Show loader — original logic
